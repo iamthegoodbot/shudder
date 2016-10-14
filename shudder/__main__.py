@@ -13,12 +13,17 @@
 # limitations under the License.
 
 """Start polling of SQS and metadata."""
+from shudder.endpoints import ShutdownWorkers
 import shudder.queue as queue
 import shudder.metadata as metadata
 from shudder.config import CONFIG
 
 import time
-import requests
+
+
+endpoints = {
+    'ShutdownWorkers': ShutdownWorkers
+}
 
 
 if __name__ == '__main__':
@@ -27,7 +32,7 @@ if __name__ == '__main__':
     while True:
         if queue.poll_queue(sns_connection, sqs_queue) \
                 or metadata.poll_instance_metadata():
+            endpoints.get(CONFIG["endpoint"])().run()
             queue.clean_up_sns(sns_connection, subscription_arn, sqs_queue)
-            requests.get(CONFIG["endpoint"])
             break
         time.sleep(5)
